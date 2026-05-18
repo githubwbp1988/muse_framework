@@ -25,9 +25,11 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 #include <MacTypes.h>
 
+#include "common/audioworkgroup.h"
 #include "iaudiodriver.h"
 
 struct AudioTimeStamp;
@@ -61,12 +63,16 @@ public:
     std::vector<samples_t> availableOutputDeviceBufferSizes() const override;
     std::vector<sample_rate_t> availableOutputDeviceSampleRates() const override;
 
+    AudioWorkGroup getAudioWorkGroup() const override;
+    async::Notification currentWorkgroupChanged() const override;
+
     struct Data;
 
 private:
     static void logError(const std::string message, OSStatus error);
 
     void initDeviceMapListener();
+    void removeDeviceMapListener();
     void doClose();
 
     std::optional<int> getAudioDeviceId(const AudioDeviceID& deviceId) const;
@@ -78,6 +84,10 @@ private:
     std::map<unsigned int, std::string> m_outputDevices = {}, m_inputDevices = {};
     mutable std::mutex m_devicesMutex;
     async::Notification m_availableOutputDevicesChanged;
+    async::Notification m_currentWorkgroupChanged;
+
+    AudioWorkGroup m_audioWorkGroup;
+    bool m_deviceMapListenerRegistered = false;
 };
 }
 #endif // MUSE_AUDIO_OSXDIRECTAUDIODRIVER_H
